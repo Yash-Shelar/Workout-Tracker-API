@@ -39,8 +39,14 @@ public class User implements UserDetails {
     @Column(name = "authority")
     private Set<String> authorities = new HashSet<>();
 
-    @OneToMany(mappedBy = "id", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<RefreshToken> refreshTokens;
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    private List<Workout> workouts;
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    private List<ScheduledWorkout> scheduledWorkouts;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
