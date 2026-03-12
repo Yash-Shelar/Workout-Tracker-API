@@ -12,6 +12,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("""
         SELECT u FROM User u
+        LEFT JOIN FETCH u.authorities
         WHERE u.userEmail = :userEmail""")
     Optional<User> findByUserEmail(String userEmail);
 

@@ -1,14 +1,18 @@
 package fit.workout_tracker.api.service;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import fit.workout_tracker.api.entity.Exercise;
 import fit.workout_tracker.api.entity.User;
@@ -16,26 +20,43 @@ import fit.workout_tracker.api.enums.ExerciseCategory;
 import fit.workout_tracker.api.enums.MuscleGroup;
 import fit.workout_tracker.api.repository.ExerciseRepository;
 import fit.workout_tracker.api.repository.UserRepository;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.transaction.Transactional;
 
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
+
+    @Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
+    private int batchSize;
+
+    @Value("${admin.credentials.email}")
+    private String adminEmail;
+
+    @Value("${admin.credentials.password}")
+    private String adminPassword;
 
     private final Logger logger = Logger.getLogger(DatabaseSeeder.class.getName());
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ExerciseRepository exerciseRepository;
+    private final HikariDataSource hikariDataSource;
+    private final EntityManagerFactory entityManagerFactory;
 
     @Autowired
     public DatabaseSeeder(
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
-        ExerciseRepository exerciseRepository) {
+        ExerciseRepository exerciseRepository,
+        HikariDataSource hikariDataSource,
+        EntityManagerFactory entityManagerFactory
+    ) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.hikariDataSource = hikariDataSource;
         this.exerciseRepository = exerciseRepository;
+        this.entityManagerFactory = entityManagerFactory;
     }
 
     @Override
@@ -43,26 +64,105 @@ public class DatabaseSeeder implements CommandLineRunner {
     public void run(String... args) throws Exception {
         logger.info("Started database seeding...");
         if (userRepository.count() == 0) {
+            logger.info("Seeding test users...");
             seedTestUser();
-            seedExercises();
-            logger.info("Database seeding complete.");
+            logger.info("Seeded test users.");
         } else {
-            logger.info("Database already seeded. skipping...");
+            logger.info("Test users already seeded. skipping...");
+        }
+
+        if (exerciseRepository.count() == 0) {
+            List<Exercise> allExercises = createListOfExercises();
+
+            logger.info("Seeding exercises...");
+            // along with jdbc batching enabled
+            seedExercisesSessionBatch(allExercises);
+            logger.info("Seeded exercises.");
+        } else {
+            logger.info("Exercises already seeded. skipping...");
         }
     }
     
     private void seedTestUser() {
-        var testUser = new User();
-        testUser.setDisplayUserName("TestUser");
-        testUser.setUserEmail("test_user@email.com");
-        testUser.setPassword(passwordEncoder.encode("password"));
+        var adminUser = new User();
+        adminUser.setDisplayUserName("Admin");
+        adminUser.setUserEmail(adminEmail);
+        adminUser.setPassword(passwordEncoder.encode(adminPassword));
+        adminUser.setVerified(true);
 
-        userRepository.save(testUser);
+        userRepository.save(adminUser);
 
-        logger.info("Seeded test user.");
+        logger.info("Seeded admin user.");
     }
 
-    private void seedExercises() {
+    private void seedExercisesSessionBatch(List<Exercise> allExercises) {
+        final int totalSize = allExercises.size();
+        entityManagerFactory.runInTransaction(em -> {
+            for (int i = 0; i < totalSize; ++i) {
+                if (i > 0 && (i % batchSize == 0 || i == totalSize)) {
+                    em.flush();
+                    em.clear();
+                }
+                em.persist(allExercises.get(i));
+            }
+        });
+    }
+
+    @SuppressWarnings("unused")
+    private void seedExerciseJdbcBatching(List<Exercise> allExercises) {
+        String insertExercise = """
+                INSERT INTO exercise
+                (id, name, description, category)
+                VALUES
+                (?, ?, ?, ?)
+                """;
+
+        String insertMuscleGroup = """
+                INSERT INTO exercise_muscle_group
+                (exercise_id, muscle_group)
+                VALUES
+                (?, ?)
+                """;
+
+        try (
+            var conn = hikariDataSource.getConnection();
+            var inExercise = conn.prepareStatement(insertExercise);
+            var inMuscleGrps = conn.prepareStatement(insertMuscleGroup)
+        ) {
+
+            int counter = 0;
+            for (var exercise : allExercises) {
+                inExercise.clearParameters();
+                inExercise.setLong(1, exercise.getId());
+                inExercise.setString(2, exercise.getName());
+                inExercise.setString(3, exercise.getDescription());
+                inExercise.setInt(4, exercise.getCategory().ordinal());
+                inExercise.addBatch();
+
+                var muscleGroups = exercise.getMuscleGroups();
+                for (var muscleGroup : muscleGroups) {
+                    inMuscleGrps.clearParameters();
+                    inMuscleGrps.setLong(1, exercise.getId());
+                    inMuscleGrps.setInt(2, muscleGroup.ordinal());
+                    inMuscleGrps.addBatch();
+                }
+
+                ++counter;
+
+                if (counter % batchSize == 0 || counter == allExercises.size()) {
+                    inExercise.executeBatch();
+                    inMuscleGrps.executeBatch();
+                    inMuscleGrps.clearBatch();
+                    inExercise.clearBatch();
+                }
+            }
+            
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private List<Exercise> createListOfExercises() {
         List<Exercise> allExercises = new ArrayList<>();
 
         // --- 1. RESISTANCE (10) ---
@@ -125,20 +225,24 @@ public class DatabaseSeeder implements CommandLineRunner {
         allExercises.add(create("Tai Chi Circle", "Slow controlled movement", ExerciseCategory.BALANCE, Set.of(MuscleGroup.LEGS, MuscleGroup.CORE)));
         allExercises.add(create("Flamingo Stand", "Single leg hold with eyes closed", ExerciseCategory.BALANCE, Set.of(MuscleGroup.LEGS, MuscleGroup.CORE)));
 
-        exerciseRepository.saveAll(allExercises);
+        // long id = 1;
+        // for (var exercise : allExercises)
+        //     exercise.setId(id++);
+
+        return allExercises;
     }
 
     private Exercise create(
         String name,
         String description,
         ExerciseCategory exerciseCategory,
-        Set<MuscleGroup> muscleGroups) {
-
+        Set<MuscleGroup> muscleGroups
+    ) {
         return new Exercise(
             null,
             name,
             description,
-            Set.of(exerciseCategory),
+            exerciseCategory,
             muscleGroups
         );
     }

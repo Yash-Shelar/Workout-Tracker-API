@@ -2,8 +2,11 @@ package fit.workout_tracker.api.entity;
 
 import java.time.Instant;
 
+import fit.workout_tracker.api.enums.WorkoutStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -33,9 +36,13 @@ public class ScheduledWorkout {
     @JoinColumn(name = "workout_id", nullable = false)
     private Workout workout;
 
-    private Instant scheduledAt;
+    private Instant scheduledFor;
 
     private Instant completedAt;
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "status", columnDefinition = "smallint")
+    private WorkoutStatus status;
 
     @Column(columnDefinition = "TEXT")
     private String userNotes;

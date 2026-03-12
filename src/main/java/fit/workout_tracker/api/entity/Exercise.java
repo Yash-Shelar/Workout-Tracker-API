@@ -2,6 +2,8 @@ package fit.workout_tracker.api.entity;
 
 import java.util.Set;
 
+import org.hibernate.annotations.BatchSize;
+
 import fit.workout_tracker.api.enums.ExerciseCategory;
 import fit.workout_tracker.api.enums.MuscleGroup;
 import jakarta.persistence.CollectionTable;
@@ -14,6 +16,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.SequenceGenerator;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,10 +29,21 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@NamedEntityGraph(
+    name = "emg_entity_graph",
+    attributeNodes = {
+        @NamedAttributeNode(value = "muscleGroups")
+    }
+)
 public class Exercise {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @SequenceGenerator(
+        name = "exercise_seq_generator",
+        sequenceName = "exercise_id_seq",
+        allocationSize = 50
+    )
     private Long id;
 
     @Column(length = 50)
@@ -35,14 +51,9 @@ public class Exercise {
 
     private String description;
 
-    @ElementCollection
-    @CollectionTable(
-        name = "exercise_category",
-        joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id")
-    )
-    @Column(name = "category", columnDefinition = "smallint")
     @Enumerated(EnumType.ORDINAL)
-    private Set<ExerciseCategory> categories;
+    @Column(name = "category", columnDefinition = "smallint")
+    ExerciseCategory category;
 
     @ElementCollection
     @CollectionTable(
@@ -51,5 +62,6 @@ public class Exercise {
     )
     @Column(name = "muscle_group", columnDefinition = "smallint")
     @Enumerated(EnumType.ORDINAL)
+    @BatchSize(size = 50)
     private Set<MuscleGroup> muscleGroups;
 }

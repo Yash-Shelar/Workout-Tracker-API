@@ -4,6 +4,7 @@ import fit.workout_tracker.api.filter.JwtAuthenticationFilter;
 import fit.workout_tracker.api.repository.UserRepository;
 import fit.workout_tracker.api.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +31,15 @@ public class SecurityConfig {
     private final HandlerExceptionResolver handlerExceptionResolver;
     private final JwtService jwtService;
 
+    @Value("${application.domain}")
+    private String domain;
+
+    @Value("${application.protocol}")
+    private String protocol;
+
+    @Value("${spring.profiles.active:Unknown}")
+    private String activeProfile;
+
     @Autowired
     public SecurityConfig(
             UserRepository userRepository,
@@ -46,13 +56,21 @@ public class SecurityConfig {
         http.sessionManagement(c ->
                 c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        http.cors(corsConfig
-                -> corsConfig.configurationSource(corsConfigurationSource()));
+        if (activeProfile.equals("dev")) {
+                http.cors(corsConfig ->
+                        corsConfig.configurationSource(corsConfigurationSource()));
+        } else {
+                http.cors(c -> c.disable());
+        }
 
         http.authorizeHttpRequests(c -> {
            c.requestMatchers(
+                   "/auth/*",
+                   "/verify",
                    "/h2-console/**",
-                   "/auth/*"
+                   "/v3/api-docs/**",
+                   "/swagger-ui.html",
+                   "/swagger-ui/**"
            ).permitAll();
            c.anyRequest().authenticated();
         });

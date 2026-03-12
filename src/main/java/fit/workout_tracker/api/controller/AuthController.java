@@ -32,9 +32,10 @@ public class AuthController {
 
     @Autowired
     public AuthController(
-            AuthenticationService authenticationService,
-            JwtService jwtService,
-            RefreshTokenService refreshTokenService) {
+        AuthenticationService authenticationService,
+        JwtService jwtService,
+        RefreshTokenService refreshTokenService
+    ) {
         this.authenticationService = authenticationService;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
@@ -42,22 +43,20 @@ public class AuthController {
 
     @PostMapping("/sign-up")
     public ResponseEntity<?> signUp(
-        @Valid @RequestBody SignUpUserDto signUpDto) {
-
-        if (authenticationService.signUpUser(signUpDto))
-            return ResponseEntity.ok().build();
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-            .body(new ErrorDto(
-                "User already exists",
-                HttpStatus.CONFLICT.value()
-            ));
+        @Valid @RequestBody SignUpUserDto signUpDto
+    ) {
+        authenticationService.signUpUser(signUpDto);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponseDto> login(
-        @Valid @RequestBody LoginUserDto loginUserDto) {
-
+        @Valid @RequestBody LoginUserDto loginUserDto
+    ) {
         User user = authenticationService.authenticate(loginUserDto);
+        if (!user.isVerified())
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+
         String jwtToken = jwtService.generateToken(user);
 
         String refreshToken = refreshTokenService.generateRefreshToken(user);
@@ -83,8 +82,8 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(
-        @CookieValue(name = "refreshToken", required = false) String refreshToken) {
-
+        @CookieValue(name = "refreshToken", required = false) String refreshToken
+    ) {
         if (refreshToken != null)
             refreshTokenService.deleteByToken(refreshToken);
 
@@ -103,8 +102,8 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refersh(
-        @CookieValue("refreshToken") String refreshToken) {
-
+        @CookieValue("refreshToken") String refreshToken
+    ) {
         if (refreshTokenService.isRefreshTokenValid(refreshToken)) {
             var token = refreshTokenService.findRefreshTokenByToken(refreshToken);
             var user = token.getUser();

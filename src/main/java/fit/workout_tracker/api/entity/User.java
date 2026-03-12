@@ -30,6 +30,10 @@ public class User implements UserDetails {
     @Setter
     private String password;
 
+    @Getter
+    @Setter
+    private boolean verified = false;
+
     @Setter
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(

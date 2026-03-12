@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +20,15 @@ import lombok.Setter;
 public class WorkoutExercise {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(
+        strategy = GenerationType.SEQUENCE,
+        generator = "workout_exercise_seq_generator"
+    )
+    @SequenceGenerator(
+        name = "workout_exercise_seq_generator",
+        sequenceName = "workout_exercise_id_seq",
+        allocationSize = 50
+    )
     private Long id;
 
     @ManyToOne

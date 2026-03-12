@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Verified | Workout Tracker</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f7; color: #51545e;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f4f4f7; min-height: 100vh; padding: 20px;">
+        <tr>
+            <td align="center" style="vertical-align: middle;">
+                <table width="100%" style="max-width: 500px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="padding: 30px 0; text-align: center; background-color: #1a1a1a;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 22px; letter-spacing: 1px;">WORKOUT TRACKER</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px; text-align: center;">
+                            <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+                            <h2 style="margin-top: 0; color: #333333; font-size: 24px;">Success!</h2>
+                            <p style="font-size: 16px; line-height: 1.6; color: #51545e;">
+                                Your email has been successfully verified. You're now ready to start tracking your gains.
+                            </p>
+                            
+                            <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-top: 30px;">
+                                <tr>
+                                    <td align="center">
+                                        <a th:href="@{/login}" 
+                                           style="background-color: #d4ff00; color: #000000; padding: 15px 40px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+                                            Go to Dashboard
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
