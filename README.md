@@ -4,9 +4,9 @@ Welcome to Workout-Tracker project. This project is a RESTful API for workout tr
 
 Users can:
 - Fetch current available set of exercises, can be sorted and filtered by category and muscle groups.
-- Create workout composed various exercises
-- Schedule workouts for specific date and time.
-- List active or pending workouts sorted by date and time.
+- Create and manage workout composed various exercises
+- Schedule and mangage scheduled workouts for specific date and time.
+- List active or pending scheduled workouts sorted by date and time.
 
 ## Tech Stack
 - Spring Boot, Spring Security
