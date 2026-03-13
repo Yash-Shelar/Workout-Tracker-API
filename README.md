@@ -1,31 +1,50 @@
 # Workout-Tracker
 
-Welcome to Workout-Tracker project. This project is a RESTful API for workout tracker application that helps you create workout from provided exercises, schedule and track workouts for registered users.
+Welcome to Workout-Tracker project. This project is a RESTful API for workout tracker application that allows users to create workout from predefined exercises, schedule workouts and track workout sessions.
 
-Users can:
-- Fetch current available set of exercises, can be sorted and filtered by category and muscle groups.
-- Create and manage workout composed various exercises
-- Schedule and mangage scheduled workouts for specific date and time.
-- List active or pending scheduled workouts sorted by date and time.
+## Features
+
+- JWT based authentication with refresh tokens
+- Email verification during registration
+- Exercise filtering by category and muscle group
+- Workout creation with multiple exercises
+- Workout scheduling
+- Scheduled cleanup jobs
+- OpenAPI documentation
 
 ## Tech Stack
-- Spring Boot, Spring Security
+- Spring Boot
 - JPA/Hibernate
 - PostgreSQL
 - Thymeleaf (only for registration verification through email)
 
 ## Implementation Details
-- User sign-up and authentication with jwt:
-    - Uses short lived signed jwt which can be refreshed, uses JJWT for working with jwt.
-    - Custom registration flow requires verification through user email with embedded html, uses JakartaMail API and thymeleaf.
-    - Endpoints secured using Spring Security.
-- Uses custom database seeder to insert predefined set of exercises.
-- Scheduled jobs are used for clean up.
-- DTO validation implemented using Jakarta Validation API.
-- JPA for modeling entities and relations, persistence implemented using Spring Data JPA.
-- Uses OpenAPI and Swagger for documentation.
-- Exception handling through custom exceptions and controller advice.
-- Follows Controller-Service-Repository (CSR) pattern.
+
+- **Authentication & Authorization**
+  - User sign-up and authentication using JWT.
+  - Short-lived signed JWT tokens with refresh support using JJWT.
+  - Custom email verification flow using Jakarta Mail API and Thymeleaf templates.
+  - Endpoints secured using Spring Security.
+
+- **Database**
+  - Predefined exercises inserted using a custom database seeder.
+  - Entities modeled using JPA/Hibernate.
+  - Persistence handled through Spring Data JPA.
+
+- **Validation**
+  - DTO validation implemented using Jakarta Validation API.
+
+- **Scheduling**
+  - Scheduled jobs used for cleanup tasks.
+
+- **API Documentation**
+  - OpenAPI / Swagger used for API documentation.
+
+- **Error Handling**
+  - Centralized exception handling using custom exceptions and Controller Advice.
+
+- **Structure**
+  - Follows the Controller-Service-Repository (CSR) pattern.
 
 ## Requirements
 - JDK 21
@@ -73,4 +92,13 @@ spring.mail.password=${APP_PASSWORD}
 spring.jpa.hibernate.ddl-auto=create-drop
 ```
 - Set profile in application.properties to dev
-- Rest can be taken and tweaked from application-prod.properties
+- The remaining configuration can be copied from application-prod.properties
+### Run
+```bash
+mvn spring-boot:run
+```
+
+## API Documentation
+
+- Swagger UI: /swagger-ui/index.html
+- OpenAPI Document: /v3/api-docs
