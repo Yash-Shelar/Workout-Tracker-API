@@ -101,7 +101,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refersh(
+    public ResponseEntity<?> refresh(
         @CookieValue("refreshToken") String refreshToken
     ) {
         if (refreshTokenService.isRefreshTokenValid(refreshToken)) {
